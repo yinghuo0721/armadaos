@@ -123,14 +123,14 @@ DTB="$MNT/usr/lib/modules/$KVER/dtb/qcom/${DEVICE_DTB}.dtb"
 echo "==> [5b] Touchscreen chain audit (for MANIFEST/diagnosis)"
 case "$DEVICE" in
     sm8550-xiaomi-sheng)
-        ( cd "$MNT/usr/lib/modules/$KVER" && \
+        ( set +o pipefail; cd "$MNT/usr/lib/modules/$KVER" && \
           echo "--- goodix/berlin modules:"; find . -iname '*goodix*' -o -iname '*berlin*' | head; \
           echo "--- touch firmware:"; find "$MNT"/lib/firmware -iname '*gt9*' -o -iname '*shen*' | head -12; \
           echo "--- dts touch node:"; strings "$DTB" | grep -i -E 'goodix|touch|berlin' | head -8; \
           echo "--- usb gadget modules:"; find . -path '*gadget*' -name '*.ko*' | head -8 ) 2>&1 | tee "$OUT/touchchain.log"
         ;;
     sm8250-xiaomi-thyme)
-        ( cd "$MNT/usr/lib/modules/$KVER" && \
+        ( set +o pipefail; cd "$MNT/usr/lib/modules/$KVER" && \
           echo "--- st-fts modules:"; find . -iname '*fts*' -o -iname '*stfts*' | head; \
           echo "--- touch firmware:"; find "$MNT"/usr/lib/firmware -iname '*ftb*' -o -iname '*fts*' | head -12; \
           echo "--- dts touch node:"; strings "$DTB" | grep -i -E 'fts|touch' | head -8; \
@@ -157,8 +157,8 @@ else
     # vendored in system_files/usr/lib/firmware and installed by the
     # container build (20-install-kernel copies the tree); the ST FTS
     # touch firmware ships from the vendor image the same way. Only audit.
-    echo "--- thyme firmware:"; ls "$MNT/usr/lib/firmware/qcom/sm8250/umi" 2>/dev/null | head -8
-    ls "$MNT/usr/lib/firmware/ath11k/QCA6390/hw2.0" 2>/dev/null | head -5
+    echo "--- thyme firmware:"; ls "$MNT/usr/lib/firmware/qcom/sm8250/umi" 2>/dev/null | head -8 || true
+    ls "$MNT/usr/lib/firmware/ath11k/QCA6390/hw2.0" 2>/dev/null | head -5 || true
 fi
 echo "firmware files: $(find "$MNT/usr/lib/firmware" -type f | wc -l)"
 
@@ -166,6 +166,7 @@ echo "==> [5d] ALSA UCM2 inject + audio audit"
 mkdir -p "$MNT/usr/share/alsa/ucm2"
 cp -a "$REPO/system_files/usr/share/alsa/ucm2/." "$MNT/usr/share/alsa/ucm2/"
 {
+  set +o pipefail
   case "$DEVICE" in
     sm8550-xiaomi-sheng)
       echo "--- sheng UCM2:"; ls "$MNT/usr/share/alsa/ucm2/Xiaomi/sheng/" 2>&1 | head
